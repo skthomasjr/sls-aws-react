@@ -1,8 +1,6 @@
 Welcome to the AWS CodeStar sample web application
 ==================================================
 
-    - sed -i -e "s|static/|$WEBSITE_S3_PREFIX/public/static/|g" build/index.html
-
 This sample code helps get you started with a simple Node.js web service deployed by AWS CloudFormation to AWS Lambda and Amazon API Gateway.
 
 What's Here
