@@ -6,19 +6,24 @@ Transform:
 Parameters:
   ProjectId:
     Type: String
-    Description: AWS CodeStar projectID used to associate new resources to team members
+    Description: Serverless React.js web application.
 
 Resources:
   GetHelloWorld:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: index.get
+      Handler: index.handler
       Runtime: nodejs8.10
       Role:
         Fn::ImportValue:
           !Join ['-', [!Ref 'ProjectId', !Ref 'AWS::Region', 'LambdaTrustRole']]
       Events:
-        GetEvent:
+        Content:
+          Type: Api
+          Properties:
+            Path: /{any+}
+            Method: get
+        Index:
           Type: Api
           Properties:
             Path: /

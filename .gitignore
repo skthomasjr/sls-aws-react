@@ -1,3 +1,5 @@
+.idea
+.vscode
 build
+coverage
 node_modules
-.idea/

@@ -1,15 +1,19 @@
 'use strict';
 
-var fs = require('fs');
-var path = require('path');
+const express = require('express');
+const awsServerlessExpress = require('aws-serverless-express');
+const path = require('path');
+const favicon = require('serve-favicon');
 
-exports.get = function(event, context, callback) {
-  var contents = fs.readFileSync(`build${path.sep}index.html`);
-  var result = {
-    statusCode: 200,
-    body: contents.toString(),
-    headers: {'content-type': 'text/html'}
-  };
+const buildPath = path.join(__dirname, 'build');
+const faviconPath = path.join(__dirname, 'build', 'favicon.ico');
+const app = express();
 
-  callback(null, result);
+app.use(favicon(faviconPath));
+app.use('/', express.static(buildPath));
+
+const server = awsServerlessExpress.createServer(app);
+
+exports.handler = (event, context) => {
+  awsServerlessExpress.proxy(server, event, context);
 };
