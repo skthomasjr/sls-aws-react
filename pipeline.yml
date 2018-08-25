@@ -339,7 +339,6 @@ Resources:
       Name: !Join
       - '-'
       - - !Ref 'ProjectId'
-        - Pipeline
       RoleArn: !GetAtt
       - CodePipelineTrustRole
       - Arn
@@ -406,9 +405,7 @@ Resources:
             - Arn
             StackName: !Join
             - '-'
-            - - awscodestar
-              - !Ref 'ProjectId'
-              - lambda
+            - - !Ref 'ProjectId'
             TemplatePath: !Join
             - ''
             - - !Ref 'ProjectId'
@@ -433,9 +430,7 @@ Resources:
             ChangeSetName: pipeline-changeset
             StackName: !Join
             - '-'
-            - - awscodestar
-              - !Ref 'ProjectId'
-              - lambda
+            - - !Ref 'ProjectId'
           InputArtifacts: [
           ]
           Name: ExecuteChangeSet
