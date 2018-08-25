@@ -1,12 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Conditions:
-  CreateCodeBuildResources: !Equals
-  - true
-  - true
-  CreateWebSiteS3Bucket: !Equals
-  - true
-  - true
-Description: A Node.js web application deployed to AWS Lambda.
+Description: The application pipeline stack.
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -18,7 +11,6 @@ Metadata:
   CodeBuildImageOverride: aws/codebuild/eb-nodejs-6.10.0-amazonlinux-64:4.0.0
   IsWebsite: true
   ProjectTemplateId: webapp-nodeweb-lambda
-  WebsiteS3Bucket: !Ref 'WebsiteS3Bucket'
 Outputs:
   LambdaTrustRole:
     Description: AWS CodeStar role for AWS Lambda used for passRole to Lambda functions.
@@ -30,12 +22,6 @@ Outputs:
         - LambdaTrustRole
     Value: !GetAtt 'LambdaTrustRole.Arn'
 Parameters:
-  AppName:
-    Default: test-app
-    Description: Name of the application.
-    MaxLength: 100
-    MinLength: 1
-    Type: String
   ProjectId:
     AllowedPattern: ^[a-z]([a-z0-9-])+$
     ConstraintDescription: Project IDs must be between 2 and 15 characters, begin with a letter, and only contain lowercase letters, numbers, and hyphens (-).
@@ -150,7 +136,6 @@ Resources:
         - CloudFormation
     Type: AWS::IAM::Role
   CodeBuildPolicy:
-    Condition: CreateCodeBuildResources
     Description: Setting IAM policy for service role for Amazon EC2 instances
     Properties:
       PolicyDocument:
@@ -176,24 +161,6 @@ Resources:
             - - 'arn:aws:s3:::'
               - !Ref 'S3Bucket'
               - /*
-        - !If
-          - CreateWebSiteS3Bucket
-          - Action:
-            - s3:PutObject*
-            - s3:GetObject
-            - s3:GetObjectVersion
-            Effect: Allow
-            Resource:
-            - !Join
-              - ''
-              - - 'arn:aws:s3:::'
-                - !Ref 'WebsiteS3Bucket'
-            - !Join
-              - ''
-              - - 'arn:aws:s3:::'
-                - !Ref 'WebsiteS3Bucket'
-                - /*
-          - !Ref 'AWS::NoValue'
         - Action:
           - kms:GenerateDataKey*
           - kms:Encrypt
@@ -214,7 +181,6 @@ Resources:
       - !Ref 'CodeBuildRole'
     Type: AWS::IAM::Policy
   CodeBuildProject:
-    Condition: CreateCodeBuildResources
     DependsOn:
     - CodeBuildPolicy
     Properties:
@@ -224,25 +190,12 @@ Resources:
       Description: !Join
       - ''
       - - 'AWS CodeStar created CodeBuild Project for '
-        - !Ref 'AppName'
+        - !Ref 'ProjectId'
       Environment:
         ComputeType: small
         EnvironmentVariables:
         - Name: S3_BUCKET
           Value: !Ref 'S3Bucket'
-        - Name: WEBSITE_S3_PREFIX
-          Value: !If
-          - CreateWebSiteS3Bucket
-          - !Join
-            - ''
-            - - https://s3.amazonaws.com/
-              - !Ref 'WebsiteS3Bucket'
-          - NoVal
-        - Name: WEBSITE_S3_BUCKET
-          Value: !If
-          - CreateWebSiteS3Bucket
-          - !Ref 'WebsiteS3Bucket'
-          - NoVal
         Image: aws/codebuild/eb-nodejs-6.10.0-amazonlinux-64:4.0.0
         Type: container
       Name: !Ref 'ProjectId'
@@ -251,7 +204,6 @@ Resources:
         Type: codepipeline
     Type: AWS::CodeBuild::Project
   CodeBuildRole:
-    Condition: CreateCodeBuildResources
     Description: Creating service role in IAM for Amazon EC2 instances
     Properties:
       AssumeRolePolicyDocument:
@@ -325,9 +277,7 @@ Resources:
                   - - stack
                     - !Join
                       - '-'
-                      - - awscodestar
-                        - !Ref 'ProjectId'
-                        - lambda
+                      - - !Ref 'ProjectId'
                     - '*'
           - Action:
             - iam:PassRole
@@ -561,40 +511,16 @@ Resources:
     Properties:
       BucketName: !Join
       - '-'
-      - - aws
-        - codestar
+      - - pipeline
+        - artifacts
         - !Ref 'AWS::Region'
-        - !Ref 'AWS::AccountId'
         - !Ref 'ProjectId'
-        - pipe
       Tags:
       - Key: Name
         Value: !Join
         - '-'
         - - !Ref 'ProjectId'
           - S3Bucket
-      VersioningConfiguration:
-        Status: Enabled
-    Type: AWS::S3::Bucket
-  WebsiteS3Bucket:
-    Condition: CreateWebSiteS3Bucket
-    DeletionPolicy: Retain
-    Description: Creating Amazon S3 bucket for Website static artifacts
-    Properties:
-      BucketName: !Join
-      - '-'
-      - - aws
-        - codestar
-        - !Ref 'AWS::Region'
-        - !Ref 'AWS::AccountId'
-        - !Ref 'ProjectId'
-        - app
-      Tags:
-      - Key: Name
-        Value: !Join
-        - '-'
-        - - !Ref 'ProjectId'
-          - WebsiteS3Bucket
       VersioningConfiguration:
         Status: Enabled
     Type: AWS::S3::Bucket
