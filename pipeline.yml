@@ -513,8 +513,8 @@ Resources:
       - '-'
       - - pipeline
         - artifacts
-        - !Ref 'AWS::Region'
         - !Ref 'ProjectId'
+        - !Ref 'AWS::Region'
       Tags:
       - Key: Name
         Value: !Join
