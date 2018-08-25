@@ -10,7 +10,7 @@ Parameters:
     Description: Serverless React.js web application.
 
 Resources:
-  MyReactApp:
+  WebApp:
     Type: AWS::Serverless::Function
     Properties:
       Handler: index.handler
