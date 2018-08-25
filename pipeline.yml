@@ -31,6 +31,7 @@ Outputs:
     Value: !GetAtt 'LambdaTrustRole.Arn'
 Parameters:
   AppName:
+    Default: test-app
     Description: Name of the application.
     MaxLength: 100
     MinLength: 1
@@ -38,6 +39,7 @@ Parameters:
   ProjectId:
     AllowedPattern: ^[a-z]([a-z0-9-])+$
     ConstraintDescription: Project IDs must be between 2 and 15 characters, begin with a letter, and only contain lowercase letters, numbers, and hyphens (-).
+    Default: test-proj
     Description: Project ID.
     MaxLength: 15
     MinLength: 2
@@ -46,14 +48,8 @@ Parameters:
     Default: master
     Description: GitHub branch name.
     Type: String
-  RepositoryEnableIssues:
-    AllowedValues:
-    - true
-    - false
-    Default: false
-    Description: Whether the GitHub issues tile is enabled.
-    Type: String
   RepositoryName:
+    Default: sls-aws-react
     Description: GitHub repository name.
     MaxLength: 100
     MinLength: 1
@@ -62,18 +58,13 @@ Parameters:
     Default: GitHub
     Description: Repository provider.
     Type: String
-  RepositoryProviderUserId:
-    Description: GitHub user ID.
-    Type: String
   RepositoryProviderUsername:
+    Default: skthomasjr
     Description: GitHub user name.
     Type: String
   RepositoryToken:
     Description: GitHub access token.
     NoEcho: true
-    Type: String
-  RepositoryURL:
-    Description: GitHub repository URL.
     Type: String
 Resources:
   CloudFormationTrustRole:
@@ -352,16 +343,6 @@ Resources:
         - !Ref 'ProjectId'
         - CodePipeline
     Type: AWS::IAM::Role
-  CodeStarProject:
-    Description: Starting project creation
-    Properties:
-      ProjectDescription: AWS CodeStar created project
-      ProjectId: !Ref 'ProjectId'
-      ProjectName: !Ref 'AppName'
-      ProjectTemplateId: arn:aws:codestar:us-east-1::project-template/github/webapp-nodeweb-lambda
-      StackId: !Ref 'AWS::StackId'
-    Type: AWS::CodeStar::Project
-    Version: 1.0
   LambdaTrustRole:
     Description: Creating service role in IAM for AWS Lambda
     Properties:
@@ -395,7 +376,6 @@ Resources:
     Type: AWS::IAM::Role
   ProjectPipeline:
     DependsOn:
-    - SeedRepo
     - LambdaTrustRole
     - CodePipelineTrustRole
     - S3Bucket
@@ -596,37 +576,6 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
     Type: AWS::S3::Bucket
-  SeedRepo:
-    DeletionPolicy: Retain
-    Description: Adding application source code to the GitHub repository for the project.
-    Properties:
-      DefaultBranchName: !Ref 'RepositoryBranch'
-      ProjectId: !Ref 'ProjectId'
-      ProjectTemplateId: arn:aws:codestar:us-east-1::project-template/github/webapp-nodeweb-lambda
-      RepositoryProvider: !Ref 'RepositoryProvider'
-      RepositoryProviderUsername: !Ref 'RepositoryProviderUsername'
-      RepositoryToken: !Ref 'RepositoryToken'
-      RepositoryURL: !Ref 'RepositoryURL'
-    Type: AWS::CodeStar::SeedRepository
-  SyncInitialResources:
-    DependsOn:
-    - SeedRepo
-    Description: Getting GitHub issues tile settings for your AWS CodeStar project.
-    Properties:
-      ProjectId: !Ref 'ProjectId'
-    Type: AWS::CodeStar::SyncResources
-    Version: 1.0
-  SyncResources:
-    DependsOn:
-    - SeedRepo
-    - CodeBuildProject
-    - ProjectPipeline
-    - SyncInitialResources
-    Description: Adding all created resources to your AWS CodeStar project
-    Properties:
-      ProjectId: !Ref 'ProjectId'
-    Type: AWS::CodeStar::SyncResources
-    Version: 1.0
   WebsiteS3Bucket:
     Condition: CreateWebSiteS3Bucket
     DeletionPolicy: Retain
